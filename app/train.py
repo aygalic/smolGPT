@@ -106,3 +106,20 @@ print(logits.shape)
 print(loss)
 idx = torch.zeros((1,1), dtype=torch.long)
 print(decode(m.generate(idx, max_new_tokens=100)[0].tolist()))
+
+# trianing the model
+optimizer = torch.optim.AdamW(m.parameters(), lr = 1e-3)
+
+batchs_size = 32
+for steps in range(5000):
+    xb, yb = get_batch("train")
+    logits, loss = m(xb, yb)
+    optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    optimizer.step()
+
+    print(loss.item())
+
+idx = torch.zeros((1,1), dtype=torch.long)
+output = decode(m.generate(idx, max_new_tokens=100)[0].tolist())
+print("".join(output))
