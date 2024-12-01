@@ -2,6 +2,13 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+DEVICE = "mps"
+torch.manual_seed(123)
+block_size = 8
+batch_size = 32
+learning_date = 1e-2
+max_iter = 3000
+eval_iter= 200
 
 with open("./data/corpus.txt", "r", encoding="utf-8") as f:
     text = f.read()
@@ -40,15 +47,13 @@ for i in range(context_length+1):
     print(f"context is {train_data[:i]}, target is {train_data[i]}")
 
 
-torch.manual_seed(123)
-batchs_size = 4
-block_size = 8
 
 def get_batch(split):
     data = train_data if split == "train" else test_data
-    ix = torch.randint(len(data) - block_size, (batchs_size,))
+    ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([data[i:i+block_size] for i in ix])
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+    x, y = x.to(DEVICE), y.to(DEVICE)
     return x, y
 
 
@@ -63,7 +68,7 @@ print(yb)
 
 print("------")
 
-for b in range(batchs_size):
+for b in range(batch_size):
     for t in range(block_size):
         context = xb[b, :t+1]
         target = yb[b,t]
@@ -100,18 +105,19 @@ class BigramLanguageModel(nn.Module):
             idx = torch.cat((idx, idx_next), dim = 1) # (B, T+1)
         return idx
     
-m = BigramLanguageModel(vacab_size)
+model = BigramLanguageModel(vacab_size)
+m = model.to(DEVICE)
+
 logits, loss = m(xb, yb)
 print(logits.shape)
 print(loss)
-idx = torch.zeros((1,1), dtype=torch.long)
+idx = torch.zeros((1,1), dtype=torch.long, device=DEVICE)
 print(decode(m.generate(idx, max_new_tokens=100)[0].tolist()))
 
 # trianing the model
-optimizer = torch.optim.AdamW(m.parameters(), lr = 1e-3)
+optimizer = torch.optim.AdamW(m.parameters(), lr = learning_date)
 
-batchs_size = 32
-for steps in range(5000):
+for steps in range(max_iter):
     xb, yb = get_batch("train")
     logits, loss = m(xb, yb)
     optimizer.zero_grad(set_to_none=True)
@@ -120,6 +126,6 @@ for steps in range(5000):
 
     print(loss.item())
 
-idx = torch.zeros((1,1), dtype=torch.long)
+context = torch.zeros((1,1), dtype=torch.long, device=DEVICE)
 output = decode(m.generate(idx, max_new_tokens=100)[0].tolist())
 print("".join(output))
