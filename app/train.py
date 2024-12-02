@@ -9,6 +9,23 @@ batch_size = 32
 learning_date = 1e-2
 max_iter = 3000
 eval_iter= 200
+eval_interval = 300
+
+@torch.no_grad()
+def estimate_loss():
+    out = {}
+    model.eval()
+    for split in ['train', 'val']:
+        losses = torch.zeros(eval_iter)
+        for k in range(eval_iter):
+            X, Y = get_batch(split)
+            logits, loss = model(X, Y)
+            losses[k]= loss.item()
+        out[split] = losses.mean()
+    model.train()
+    return out
+
+
 
 with open("./data/corpus.txt", "r", encoding="utf-8") as f:
     text = f.read()
@@ -117,14 +134,18 @@ print(decode(m.generate(idx, max_new_tokens=100)[0].tolist()))
 # trianing the model
 optimizer = torch.optim.AdamW(m.parameters(), lr = learning_date)
 
-for steps in range(max_iter):
+for iter in range(max_iter):
+
+    if iter % eval_interval == 0:
+        losses = estimate_loss()
+        print(f"step {iter}, train loss = {losses['train']:.4f}, val loss = {losses['val']:.4f}")
     xb, yb = get_batch("train")
     logits, loss = m(xb, yb)
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
     optimizer.step()
 
-    print(loss.item())
+    #print(loss.item())
 
 context = torch.zeros((1,1), dtype=torch.long, device=DEVICE)
 output = decode(m.generate(idx, max_new_tokens=100)[0].tolist())
