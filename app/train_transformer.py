@@ -151,3 +151,18 @@ for iter in range(max_iter):
 context = torch.zeros((1,1), dtype=torch.long, device=DEVICE)
 output = decode(m.generate(idx, max_new_tokens=100)[0].tolist())
 print("".join(output))
+
+
+# Mathematical trick for self attention:
+
+B, T, C = 4,8,2
+x = torch.randn(B, T, C)
+print(x.shape)
+
+tril = torch.tril(torch.ones(T,T))
+xbow = torch.zeros((B, T, C))
+wei = torch.zeros((T,T))
+wei = wei.masked_fill(tril == 0, float("-inf"))
+wei = F.softmax(wei, dim = -1)
+xbow3 = wei @ x
+torch.allclose(xbow, xbow3)
