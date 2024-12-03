@@ -5,15 +5,15 @@ from torch.nn import functional as F
 
 DEVICE = "mps"
 torch.manual_seed(123)
-block_size = 8
-batch_size = 32
-learning_date = 1e-3
+block_size = 256
+batch_size = 64
+learning_date = 3e-4
 max_iter = 5000
 eval_iter= 200
 eval_interval = 300
-n_embed = 32
-n_layer = 5
-n_heads = 8
+n_embed = 128
+n_layer = 2
+n_heads = 4
 dropout = 0.2
 
 
@@ -135,7 +135,7 @@ class BigramLanguageModel(nn.Module):
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
         self.position_embedding_table = nn.Embedding(block_size, n_embed)
-        self.blocks = nn.Sequential([*[Block(n_embed, num_heads=n_heads) for _ in range(n_layer)]])
+        self.blocks = nn.Sequential(*[Block(n_embed, num_heads=n_heads) for _ in range(n_layer)])
         self.ln_f = nn.LayerNorm(n_embed)
         self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
 
