@@ -36,7 +36,6 @@ with open("./data/corpus.txt", "r", encoding="utf-8") as f:
 print(f"length of the dataset in characters : {len(text)}")
 chars = sorted(list(set(text)))
 vocab_size = len(chars)
-print("".join(chars))
 print(f"Vacabulary size : {vocab_size=}")
 
 
@@ -46,26 +45,14 @@ itos = {i:s for (i,s) in enumerate(chars)}
 encode = lambda s : [stoi[c] for c in s]
 decode = lambda l : [itos[i] for i in l]
 
-print(encode("test"))
-print(decode(encode("test")))
 
 # tokenize data
 data = torch.tensor(encode(text), dtype = torch.long )
-print(data.shape, data.dtype)
-print(data[:10])
 
 # train/test split:
 n = int(len(data)*0.9)
 train_data = data[:n]
 test_data = data[n:]
-
-# context_length / block_size
-context_length = 8
-print(f"first block is {train_data[:context_length+1]}")
-
-for i in range(context_length+1):
-    print(f"context is {train_data[:i]}, target is {train_data[i]}")
-
 
 
 def get_batch(split):
@@ -75,26 +62,6 @@ def get_batch(split):
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
     x, y = x.to(DEVICE), y.to(DEVICE)
     return x, y
-
-
-xb, yb = get_batch("train")
-print("inputs:")
-print(xb.shape)
-print(xb)
-
-print("targets:")
-print(yb.shape)
-print(yb)
-
-print("------")
-
-for b in range(batch_size):
-    for t in range(block_size):
-        context = xb[b, :t+1]
-        target = yb[b,t]
-        print(f"When {context=}, {target=}")
-
-
 
 class Head(nn.Module):
     def __init__(self, head_size):
@@ -163,11 +130,9 @@ class BigramLanguageModel(nn.Module):
 model = BigramLanguageModel()
 m = model.to(DEVICE)
 
-logits, loss = m(xb, yb)
-print(logits.shape)
-print(loss)
 idx = torch.zeros((1,1), dtype=torch.long, device=DEVICE)
-print(decode(m.generate(idx, max_new_tokens=100)[0].tolist()))
+output = decode(m.generate(idx, max_new_tokens=100)[0].tolist())
+print("".join(output))
 
 # trianing the model
 optimizer = torch.optim.AdamW(m.parameters(), lr = learning_date)
@@ -189,31 +154,3 @@ context = torch.zeros((1,1), dtype=torch.long, device=DEVICE)
 output = decode(m.generate(idx, max_new_tokens=100)[0].tolist())
 print("".join(output))
 
-
-# Mathematical trick for self attention:
-
-B, T, C = 4,8,32
-x = torch.randn(B, T, C)
-print(x.shape)
-
-
-head_size = 16
-key = nn.Linear(C, head_size, bias=False)
-query = nn.Linear(C, head_size, bias=False)
-value = nn.Linear(C, head_size, bias=False)
-k = key(x) # (B, T, 16)
-q = query(x) # (B, T, 16)
-v = value(x) # (B, T, 16)
-wei = q @ k.transpose(-2, -1) * head_size**-0.5 # (B, T, 16) @ (B, 16, T), ---> (B, T, T)
-
-tril = torch.tril(torch.ones(T,T))
-xbow = torch.zeros((B, T, C))
-#wei = torch.zeros((T,T))
-wei = wei.masked_fill(tril == 0, float("-inf"))
-wei = F.softmax(wei, dim = -1)
-
-#xbow3 = wei @ x
-#torch.allclose(xbow, xbow3)
-
-v = value(x)
-out  = wei @ v
