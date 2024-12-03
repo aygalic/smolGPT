@@ -63,6 +63,18 @@ def get_batch(split):
     x, y = x.to(DEVICE), y.to(DEVICE)
     return x, y
 
+class FeedForward(nn.Module):
+    def __init__(self, n_embed):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(n_embed, n_embed),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
 class Head(nn.Module):
     def __init__(self, head_size):
         super().__init__()
@@ -70,6 +82,7 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embed, head_size, bias=False)
         self.value = nn.Linear(n_embed, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+
     def forward(self, x):
         B, T, C = x.shape
 
@@ -96,7 +109,8 @@ class BigramLanguageModel(nn.Module):
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
         self.position_embedding_table = nn.Embedding(block_size, n_embed)
-        self.sa_head = Head(n_embed)
+        self.sa_head = MultiHead(4, n_embed//4)
+        self.ffw_head = FeedForward(n_embed)
         self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
 
 
@@ -107,6 +121,7 @@ class BigramLanguageModel(nn.Module):
         pos_emb = self.position_embedding_table(torch.arange(T, device=DEVICE)) # (T, C) C = n_embed
         x = tok_emb + pos_emb
         x = self.sa_head(x) # apply self attention (B, T, C)
+        x = self.ffw_head(x) # (B, T, C)
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         if targets is None:
