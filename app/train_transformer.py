@@ -12,6 +12,9 @@ max_iter = 5000
 eval_iter= 200
 eval_interval = 300
 n_embed = 32
+n_layer = 5
+n_heads = 8
+dropout = 0.2
 
 
 @torch.no_grad()
@@ -70,6 +73,7 @@ class FeedForward(nn.Module):
             nn.Linear(n_embed, n_embed*4),
             nn.ReLU(),
             nn.Linear(4*n_embed, n_embed),
+            nn.Dropout(dropout),
         )
 
     def forward(self, x):
@@ -83,6 +87,7 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embed, head_size, bias=False)
         self.value = nn.Linear(n_embed, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         B, T, C = x.shape
@@ -93,6 +98,7 @@ class Head(nn.Module):
         wei = q @ k.transpose(-2, -1) * C**-0.5 # (B, T, 16) @ (B, 16, T), ---> (B, T, T)
         wei = wei.masked_fill(self.tril[:T, :T] == 0 , float("-inf"))
         wei = F.softmax(wei, dim = -1)
+        wei = self.dropout(wei)
         v = self.value(x)
         out  = wei @ v
         return out
@@ -102,10 +108,12 @@ class MultiHeadAttention(nn.Module):
         super().__init__()
         self.heads = nn.ModuleList([Head(head_size) for _ in range(num_heads)])
         self.proj = nn.Linear(num_heads*head_size, n_embed)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
         out = torch.cat([h(x) for h in self.heads], dim = -1)
         out = self.proj(out)
+        out = self.dropout(out)
         return out
     
 class Block(nn.Module):
@@ -127,26 +135,17 @@ class BigramLanguageModel(nn.Module):
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
         self.position_embedding_table = nn.Embedding(block_size, n_embed)
-
-        self.blocks = nn.Sequential(
-            Block(n_embed, num_heads=4),
-            Block(n_embed, num_heads=4),
-            Block(n_embed, num_heads=4),
-            nn.LayerNorm(n_embed),
-        )
-
+        self.blocks = nn.Sequential([*[Block(n_embed, num_heads=n_heads) for _ in range(n_layer)]])
+        self.ln_f = nn.LayerNorm(n_embed)
         self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
-
 
     def forward(self, idx, targets = None):
         B, T = idx.shape
-
         tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
         pos_emb = self.position_embedding_table(torch.arange(T, device=DEVICE)) # (T, C) C = n_embed
-        x = tok_emb + pos_emb
-
+        x = tok_emb + pos_emb # (B, T, C)
         x = self.blocks(x) # apply self attention (B, T, C)
-
+        x = self.ln_f(x) # (B, T, C)
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         if targets is None:
