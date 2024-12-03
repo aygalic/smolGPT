@@ -11,6 +11,8 @@ learning_date = 1e-2
 max_iter = 3000
 eval_iter= 200
 eval_interval = 300
+n_embed = 32
+
 
 @torch.no_grad()
 def estimate_loss():
@@ -33,9 +35,9 @@ with open("./data/corpus.txt", "r", encoding="utf-8") as f:
 
 print(f"length of the dataset in characters : {len(text)}")
 chars = sorted(list(set(text)))
-vacab_size = len(chars)
+vocab_size = len(chars)
 print("".join(chars))
-print(f"Vacabulary size : {vacab_size=}")
+print(f"Vacabulary size : {vocab_size=}")
 
 
 # tokenizer
@@ -93,12 +95,16 @@ for b in range(batch_size):
         print(f"When {context=}, {target=}")
 
 class BigramLanguageModel(nn.Module):
-    def __init__(self, vocab_size):
+    def __init__(self):
         super().__init__()
-        self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+        self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
+        self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
+
 
     def forward(self, idx, targets = None):
-        logits = self.token_embedding_table(idx) # (B, T, C)
+        tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
+        logits = self.lm_head(tok_emb) # (B, T, vocab_size)
+
         if targets is None:
             loss = None
         else:
@@ -123,7 +129,7 @@ class BigramLanguageModel(nn.Module):
             idx = torch.cat((idx, idx_next), dim = 1) # (B, T+1)
         return idx
     
-model = BigramLanguageModel(vacab_size)
+model = BigramLanguageModel()
 m = model.to(DEVICE)
 
 logits, loss = m(xb, yb)
