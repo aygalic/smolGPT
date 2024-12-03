@@ -166,13 +166,22 @@ print("".join(output))
 
 # Mathematical trick for self attention:
 
-B, T, C = 4,8,2
+B, T, C = 4,8,32
 x = torch.randn(B, T, C)
 print(x.shape)
 
+
+head_size = 16
+key = nn.Linear(C, head_size, bias=False)
+query = nn.Linear(C, head_size, bias=False)
+k = key(x) # (B, T, 16)
+q = query(x) # (B, T, 16)
+
+wei = q @ k.transpose(-2, -1) # (B, T, 16) @ (B, 16, T), ---> (B, T, T)
+
 tril = torch.tril(torch.ones(T,T))
 xbow = torch.zeros((B, T, C))
-wei = torch.zeros((T,T))
+#wei = torch.zeros((T,T))
 wei = wei.masked_fill(tril == 0, float("-inf"))
 wei = F.softmax(wei, dim = -1)
 xbow3 = wei @ x
