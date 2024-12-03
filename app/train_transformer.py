@@ -7,8 +7,8 @@ DEVICE = "mps"
 torch.manual_seed(123)
 block_size = 8
 batch_size = 32
-learning_date = 1e-2
-max_iter = 3000
+learning_date = 1e-3
+max_iter = 5000
 eval_iter= 200
 eval_interval = 300
 n_embed = 32
@@ -94,11 +94,35 @@ for b in range(batch_size):
         target = yb[b,t]
         print(f"When {context=}, {target=}")
 
+
+
+class Head(nn.Module):
+    def __init__(self, head_size):
+        super().__init__()
+        self.key = nn.Linear(n_embed, head_size, bias=False)
+        self.query = nn.Linear(n_embed, head_size, bias=False)
+        self.value = nn.Linear(n_embed, head_size, bias=False)
+        self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+    def forward(self, x):
+        B, T, C = x.shape
+
+        k = self.key(x) # (B, T, 16)
+        q = self.query(x) # (B, T, 16)
+        v = self.value(x) # (B, T, 16)
+        wei = q @ k.transpose(-2, -1) * C**-0.5 # (B, T, 16) @ (B, 16, T), ---> (B, T, T)
+        wei = wei.masked_fill(self.tril[:T, :T] == 0 , float("-inf"))
+        wei = F.softmax(wei, dim = -1)
+        v = self.value(x)
+        out  = wei @ v 
+        return out
+
+
 class BigramLanguageModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
         self.position_embedding_table = nn.Embedding(block_size, n_embed)
+        self.sa_head = Head(n_embed)
         self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
 
 
@@ -108,6 +132,7 @@ class BigramLanguageModel(nn.Module):
         tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
         pos_emb = self.position_embedding_table(torch.arange(T, device=DEVICE)) # (T, C) C = n_embed
         x = tok_emb + pos_emb
+        x = self.sa_head(x) # apply self attention (B, T, C)
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         if targets is None:
@@ -122,8 +147,9 @@ class BigramLanguageModel(nn.Module):
     def generate(self, idx, max_new_tokens):
         # idx shape is (B,T) array of indices in the current context
         for _ in range(max_new_tokens):
+            idx_cond = idx[:, -block_size:]
             # get preds:
-            logits, loss = self(idx)
+            logits, loss = self(idx_cond)
             # focus on last time step:
             logits = logits[:, -1, :] # (B, C)
             # softmax for probs
@@ -174,15 +200,20 @@ print(x.shape)
 head_size = 16
 key = nn.Linear(C, head_size, bias=False)
 query = nn.Linear(C, head_size, bias=False)
+value = nn.Linear(C, head_size, bias=False)
 k = key(x) # (B, T, 16)
 q = query(x) # (B, T, 16)
-
-wei = q @ k.transpose(-2, -1) # (B, T, 16) @ (B, 16, T), ---> (B, T, T)
+v = value(x) # (B, T, 16)
+wei = q @ k.transpose(-2, -1) * head_size**-0.5 # (B, T, 16) @ (B, 16, T), ---> (B, T, T)
 
 tril = torch.tril(torch.ones(T,T))
 xbow = torch.zeros((B, T, C))
 #wei = torch.zeros((T,T))
 wei = wei.masked_fill(tril == 0, float("-inf"))
 wei = F.softmax(wei, dim = -1)
-xbow3 = wei @ x
-torch.allclose(xbow, xbow3)
+
+#xbow3 = wei @ x
+#torch.allclose(xbow, xbow3)
+
+v = value(x)
+out  = wei @ v
