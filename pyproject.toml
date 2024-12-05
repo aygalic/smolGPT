@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 torch = "^2.5.1"
+lightning = "^2.4.0"
 
 
 [build-system]

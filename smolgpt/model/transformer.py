@@ -2,9 +2,11 @@ import torch.nn as nn
 import torch
 from smolgpt.model.block import Block
 from torch.nn import functional as F
+import lightning as L
+
 DEVICE = "mps"
 
-class Transformer(nn.Module):
+class Transformer(L.LightningModule):
     def __init__(self, vocab_size, n_embed, block_size, n_heads, n_layer, dropout):
         super().__init__()
         self.block_size = block_size
@@ -18,7 +20,6 @@ class Transformer(nn.Module):
         B, T = idx.shape
         tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
         pos_emb = self.position_embedding_table(torch.arange(T, device=DEVICE)) # (T, C) C = n_embed
-        #pos_emb = self.position_embedding_table(torch.arange(T)) # (T, C) C = n_embed
         x = tok_emb + pos_emb # (B, T, C)
         x = self.blocks(x) # apply self attention (B, T, C)
         x = self.ln_f(x) # (B, T, C)
