@@ -5,6 +5,7 @@ from torch.nn import functional as F
 import lightning as L
 
 DEVICE = "mps"
+learning_rate = 3e-4
 
 class Transformer(L.LightningModule):
     def __init__(self, vocab_size, n_embed, block_size, n_heads, n_layer, dropout):
@@ -38,6 +39,9 @@ class Transformer(L.LightningModule):
         xb, yb = batch
         logits, loss = self(xb, yb)
         return loss
+
+    def configure_optimizers(self):
+        return torch.optim.AdamW(self.parameters(), lr = learning_rate)
 
     def generate(self, idx, max_new_tokens):
         # idx shape is (B,T) array of indices in the current context
