@@ -34,6 +34,11 @@ class Transformer(L.LightningModule):
             loss = F.cross_entropy(logits, targets)
         return logits, loss
     
+    def training_step(self, batch, batch_idx):
+        xb, yb = batch
+        logits, loss = self(xb, yb)
+        return loss
+
     def generate(self, idx, max_new_tokens):
         # idx shape is (B,T) array of indices in the current context
         for _ in range(max_new_tokens):
