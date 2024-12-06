@@ -82,8 +82,8 @@ class TinyShakespeareData(L.LightningDataModule):
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=4,
-            pin_memory=True
+            #num_workers=4,
+            #pin_memory=True
         )
     
     def val_dataloader(self):
@@ -91,8 +91,8 @@ class TinyShakespeareData(L.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=4,
-            pin_memory=True
+            #num_workers=4,
+            #pin_memory=True
         )
     
     def test_dataloader(self):
@@ -100,6 +100,6 @@ class TinyShakespeareData(L.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=4,
-            pin_memory=True
+            #num_workers=4,
+            #pin_memory=True
         )
