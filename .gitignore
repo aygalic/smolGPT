@@ -1,2 +1,3 @@
 *.pyc
 *hparams*
+*.ckpt
