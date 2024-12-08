@@ -17,7 +17,7 @@ class Transformer(L.LightningModule):
         self.ln_f = nn.LayerNorm(n_embed)
         self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
 
-    def forward(self, idx, targets = None):
+    def forward(self, idx):
         B, T = idx.shape
         tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
         pos_emb = self.position_embedding_table(torch.arange(T, device=DEVICE)) # (T, C) C = n_embed
@@ -25,19 +25,15 @@ class Transformer(L.LightningModule):
         x = self.blocks(x) # apply self attention (B, T, C)
         x = self.ln_f(x) # (B, T, C)
         logits = self.lm_head(x) # (B, T, vocab_size)
-
-        if targets is None:
-            loss = None
-        else:
-            B, T, C = logits.shape
-            logits = logits.view(B*T, C)
-            targets = targets.view(B*T)
-            loss = F.cross_entropy(logits, targets)
-        return logits, loss
+        return logits
     
     def training_step(self, batch, batch_idx):
-        xb, yb = batch
-        logits, loss = self(xb, yb)
+        x, targets = batch
+        logits = self(x)
+        B, T, C = logits.shape
+        logits = logits.view(B*T, C)
+        targets = targets.view(B*T)
+        loss = F.cross_entropy(logits, targets)
         return loss
 
     def configure_optimizers(self):
