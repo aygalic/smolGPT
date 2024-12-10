@@ -1,5 +1,5 @@
 """draft for implementing tokenization"""
-
+from collections import Counter
 text = """the full recipe that defines how your nn.Modules interact.
 
     The training_step defines how the nn.Modules interact together.
@@ -30,3 +30,50 @@ print(tokens)
 print("-----")
 print(len(tokens))
 print("-----")
+
+
+
+def get_stats(ids):
+    return Counter(zip(ids, ids[1:]))
+
+stats = get_stats(tokens)
+print(stats)
+print(sorted(((v,k) for k,v in stats.items()), reverse=True) )
+
+top_pair = max(stats, key = stats.get)
+print(top_pair)
+
+def merge(ids, pair, idx):
+    newids = []
+    i=0
+    while i<len(ids):
+        if i<len(ids)-1 and ids[i] == pair[0] and  ids[i+1] == pair[1]:
+            newids.append(idx)
+            i += 2
+        else:
+            newids.append(ids[i])
+            i += 1
+    return newids
+
+print(merge([5,6,6,7,9,1], (6,7), 99))
+
+tokens2 = merge(tokens, top_pair, 256)
+print(tokens2)
+print(len(tokens2))
+
+# -----
+
+vocab_size = 276
+num_merges = vocab_size - 256 # original number of tokens
+ids = list(tokens)
+merges = {}
+for i in range(num_merges):
+    stats = get_stats(ids)
+    pair = max(stats, key = stats.get)
+    idx = 256 + i
+    print(f"merged {pair=} into new token {idx=}")
+    ids= merge(ids, pair, idx)
+    merges[pair]=idx
+
+print(ids)
+print(len(ids))
