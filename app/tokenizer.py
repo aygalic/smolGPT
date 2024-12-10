@@ -31,7 +31,7 @@ print("-----")
 print(len(tokens))
 print("-----")
 
-
+# byte pair encoding
 
 def get_stats(ids):
     return Counter(zip(ids, ids[1:]))
@@ -76,4 +76,31 @@ for i in range(num_merges):
     merges[pair]=idx
 
 print(ids)
+print(len(tokens))
 print(len(ids))
+print(f"compression ration = {len(tokens)/len(ids)}")
+
+# ---- decoding
+
+reversed_map = {v:k for k,v in merges.items()}
+print(reversed_map)
+
+
+
+def decode(ids):
+    _decoded_seq = []
+    for token in ids:
+        if token in reversed_map.keys():
+            new_tokens = reversed_map[token]
+            out = decode(new_tokens)
+        else :
+            out = [token]
+        _decoded_seq += out
+    return _decoded_seq
+
+decoded_sec = decode(ids)
+print(decoded_sec)
+print(len(decoded_sec))
+
+breakpoint()
+
