@@ -91,16 +91,19 @@ def decode(ids):
     _decoded_seq = []
     for token in ids:
         if token in reversed_map.keys():
-            new_tokens = reversed_map[token]
-            out = decode(new_tokens)
+            pair = reversed_map[token]
+            _decoded_seq += decode(list(pair))
         else :
-            out = [token]
-        _decoded_seq += out
+            _decoded_seq += [token]
     return _decoded_seq
 
-decoded_sec = decode(ids)
-print(decoded_sec)
-print(len(decoded_sec))
+decoded_seq = decode(ids)
+print(decoded_seq)
+print(len(decoded_seq))
 
-breakpoint()
+#breakpoint()
+out = bytes(decoded_seq)
+print(out.decode("utf8"))
+
+
 
