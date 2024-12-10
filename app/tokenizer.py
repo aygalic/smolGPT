@@ -103,7 +103,7 @@ print(len(decoded_seq))
 
 #breakpoint()
 out = bytes(decoded_seq)
-print(out.decode("utf8"))
+print(out.decode("utf8", errors="replace"))
 
 
 
