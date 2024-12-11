@@ -86,24 +86,26 @@ reversed_map = {v:k for k,v in merges.items()}
 print(reversed_map)
 
 
-
 def decode(ids):
-    _decoded_seq = []
-    for token in ids:
-        if token in reversed_map.keys():
-            pair = reversed_map[token]
-            _decoded_seq += decode(list(pair))
-        else :
-            _decoded_seq += [token]
-    return _decoded_seq
+    def decode_recursive(ids):
+        _decoded_seq = []
+        for token in ids:
+            if token in reversed_map.keys():
+                pair = reversed_map[token]
+                _decoded_seq += decode_recursive(list(pair))
+            else :
+                _decoded_seq += [token]
+        return _decoded_seq
+    
+    out = decode_recursive(ids)
+    out = bytes(out)
+    return out.decode("utf8", errors="replace")
 
 decoded_seq = decode(ids)
+
 print(decoded_seq)
 print(len(decoded_seq))
 
-#breakpoint()
-out = bytes(decoded_seq)
-print(out.decode("utf8", errors="replace"))
 
 
 def encode(text):
@@ -127,5 +129,5 @@ def encode(text):
 
 print(f'{encode(text)=}')
 
-
-print(f'{bytes(decode(encode(text))).decode("utf8", errors="replace")=}')
+out = decode(encode(text))
+print(out)
