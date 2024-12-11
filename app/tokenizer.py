@@ -107,27 +107,39 @@ print(decoded_seq)
 print(len(decoded_seq))
 
 
-
 def encode(text):
     tokens = text.encode("utf-8")
     tokens = list(map(int, tokens))
     ids = list(tokens)
 
-    def recursive_encode(ids):
-        encoded_seq_ = []
-        for tok in ids:
-            if tok in merges.keys():
-                out = merges[tok]
-                out = recursive_encode(out)
-                encoded_seq_.extend(out)
-            else:
-                encoded_seq_.append(tok)
-        return encoded_seq_
 
-    encoded_seq  = recursive_encode(tokens)
-    return encoded_seq
+    while True:
+        encoded_seq_ = []
+        i = 0
+        found_pairs = False
+        while i<len(ids):
+            if i==len(ids)-1:
+                encoded_seq_.append(ids[i])
+                break
+            pair = (ids[i], ids[i+1])
+            if pair in merges.keys():
+                tok = merges[pair]
+                encoded_seq_.append(tok)
+                found_pairs = True
+                i+=2
+            else:
+                encoded_seq_.append(ids[i])
+                i+=1
+        ids = encoded_seq_
+
+        if not found_pairs:
+            return ids
+
+
 
 print(f'{encode(text)=}')
-
 out = decode(encode(text))
+
 print(out)
+
+print("compression ratio =",len(decode(encode(text)))/ len(encode(text)) )
