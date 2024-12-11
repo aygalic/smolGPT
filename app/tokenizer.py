@@ -106,4 +106,26 @@ out = bytes(decoded_seq)
 print(out.decode("utf8", errors="replace"))
 
 
+def encode(text):
+    tokens = text.encode("utf-8")
+    tokens = list(map(int, tokens))
+    ids = list(tokens)
 
+    def recursive_encode(ids):
+        encoded_seq_ = []
+        for tok in ids:
+            if tok in merges.keys():
+                out = merges[tok]
+                out = recursive_encode(out)
+                encoded_seq_.extend(out)
+            else:
+                encoded_seq_.append(tok)
+        return encoded_seq_
+
+    encoded_seq  = recursive_encode(tokens)
+    return encoded_seq
+
+print(f'{encode(text)=}')
+
+
+print(f'{bytes(decode(encode(text))).decode("utf8", errors="replace")=}')
