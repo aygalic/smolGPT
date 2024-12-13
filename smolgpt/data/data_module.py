@@ -1,6 +1,7 @@
 import lightning as L
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split
+from smolgpt.tokenizer.ascii_tokenizer import ASCIITokenizer
 
 class TextDataset(Dataset):
     def __init__(self, data, block_size):
@@ -21,25 +22,18 @@ class TinyShakespeareData(L.LightningDataModule):
         path_to_dir="./data/corpus.txt",
         batch_size=32,
         block_size=256,
-        train_val_split=(0.9, 0.1)
+        train_val_split=(0.9, 0.1),
+        tokenizer = None
     ):
         super().__init__()
         self.path_to_dir = path_to_dir
         self.batch_size = batch_size
         self.block_size = block_size
         self.train_val_split = train_val_split
-        self.stoi = None
-        self.itos = None
-        self.vocab_size = None
-        
-    def encode(self, x):
-        """Convert string to list of integers"""
-        return [self.stoi[c] for c in x]
-    
-    def decode(self, x):
-        """Convert list of integers back to string"""
-        return [self.itos[i] for i in x]
-    
+        self.tokenizer = tokenizer
+        if self.tokenizer is None:
+            self.tokenizer = ASCIITokenizer()
+                
     def prepare_data(self):
         """Called only once and on 1 GPU"""
         # You can download data here if needed
@@ -51,14 +45,8 @@ class TinyShakespeareData(L.LightningDataModule):
         with open(self.path_to_dir, "r", encoding="utf-8") as f:
             text = f.read()
             
-        # Create vocabulary
-        chars = sorted(list(set(text)))
-        self.vocab_size = len(chars)
-        self.stoi = {s: i for i, s in enumerate(chars)}
-        self.itos = {i: s for i, s in enumerate(chars)}
-        
         # Encode the full text
-        data = torch.tensor(self.encode(text), dtype=torch.long)
+        data = torch.tensor(self.tokenizer.encode(text), dtype=torch.long)
         
         # Create train/val split
         train_len = int(len(data) * self.train_val_split[0])

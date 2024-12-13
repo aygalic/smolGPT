@@ -4,6 +4,7 @@ from lightning import Trainer
 import torch
 from smolgpt.model.transformer import Transformer
 from smolgpt.data.data_module import TinyShakespeareData
+from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
 
 DEVICE = "mps"
 torch.manual_seed(123)
@@ -18,13 +19,17 @@ n_embed = n_heads * 32
 n_layer = 2
 dropout = 0.2
 
+tokenizer = BPETokenizer.load("tokenizer/vocab/")
 
 data_module = TinyShakespeareData(
-    path_to_dir="./data/corpus.txt", batch_size=batch_size, block_size=block_size
+    path_to_dir="./data/corpus.txt",
+    batch_size=batch_size,
+    block_size=block_size,
+    tokenizer=tokenizer,
 )
 data_module.setup()
 # Access vocab size for model initialization
-vocab_size = data_module.vocab_size
+vocab_size = data_module.tokenizer.vocab_size
 
 model = Transformer(vocab_size, n_embed, block_size, n_heads, n_layer, dropout)
 
@@ -34,5 +39,5 @@ trainer.fit(model, data_module)
 m = model.to(DEVICE)
 idx = torch.zeros((1, 1), dtype=torch.long, device=DEVICE)
 context = torch.zeros((1, 1), dtype=torch.long, device=DEVICE)
-output = data_module.decode(m.generate(idx, max_new_tokens=1000)[0].tolist())
+output = data_module.tokenizer.decode(m.generate(idx, max_new_tokens=1000)[0].tolist())
 print("".join(output))
