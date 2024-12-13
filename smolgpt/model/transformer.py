@@ -44,7 +44,7 @@ class Transformer(L.LightningModule):
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -self.block_size:]
             # get preds:
-            logits, loss = self(idx_cond)
+            logits = self(idx_cond)
             # focus on last time step:
             logits = logits[:, -1, :] # (B, C)
             # softmax for probs
