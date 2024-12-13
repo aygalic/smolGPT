@@ -1,7 +1,7 @@
 import unittest
 from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
 
-class TestClassName(unittest.TestCase):
+class TestClassBPETokenizer(unittest.TestCase):
     def setUp(self):
         """
         This method is called before each test case.
