@@ -26,7 +26,6 @@ print(f'{tokenizer.encode(text)=}')
 out = tokenizer.decode(tokenizer.encode(text))
 
 print(out)
-
 print("compression ratio =",len(tokenizer.decode(tokenizer.encode(text)))/ len(tokenizer.encode(text)) )
 
 
