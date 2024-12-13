@@ -1,5 +1,5 @@
 """draft for implementing tokenization"""
-from smolgpt.tokenizer.bpe_tokenize import PBETokenize
+from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
 
 text = """the full recipe that defines how your nn.Modules interact.
 
@@ -19,7 +19,7 @@ class LitAutoEncoder(L.LightningModule):
         x = x.view(x.size(0), -1)
         z = self.encoder#😎"""
 
-tokenizer = PBETokenize()
+tokenizer = BPETokenizer()
 tokenizer.fit(text)
 
 print(f'{tokenizer.encode(text)=}')

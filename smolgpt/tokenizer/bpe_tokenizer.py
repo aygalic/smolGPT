@@ -1,7 +1,7 @@
 from collections import Counter
 
 
-class PBETokenize:
+class BPETokenizer:
     def __init__(self):
         self.merges = {}
 
