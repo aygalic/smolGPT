@@ -1,18 +1,18 @@
 from collections import Counter
 
+
 class PBETokenize:
     def __init__(self):
         self.merges = {}
-    
-    
-    def _get_stats(self, ids):
+
+    def _get_stats(self, ids: list[int]) -> dict[tuple[int, int], int]:
         return Counter(zip(ids, ids[1:]))
 
-    def _merge(self, ids, pair, idx):
+    def _merge(self, ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
         newids = []
-        i=0
-        while i<len(ids):
-            if i<len(ids)-1 and ids[i] == pair[0] and  ids[i+1] == pair[1]:
+        i = 0
+        while i < len(ids):
+            if i < len(ids) - 1 and ids[i] == pair[0] and ids[i + 1] == pair[1]:
                 newids.append(idx)
                 i += 2
             else:
@@ -20,21 +20,20 @@ class PBETokenize:
                 i += 1
         return newids
 
-
-    def fit(self, text):
+    def fit(self, text: str):
         tokens = text.encode("utf-8")
         tokens = list(map(int, tokens))
 
         vocab_size = 276
-        num_merges = vocab_size - 256 # original number of tokens
+        num_merges = vocab_size - 256  # original number of tokens
         ids = list(tokens)
         for i in range(num_merges):
             stats = self._get_stats(ids)
-            pair = max(stats, key = stats.get)
+            pair = max(stats, key=stats.get)
             idx = 256 + i
             print(f"merged {pair=} into new token {idx=}")
-            ids= self._merge(ids, pair, idx)
-            self.merges[pair]=idx
+            ids = self._merge(ids, pair, idx)
+            self.merges[pair] = idx
 
         print(ids)
         print(len(tokens))
@@ -42,54 +41,47 @@ class PBETokenize:
         print(f"compression ration = {len(tokens)/len(ids)}")
 
         # ---- decoding
-        self.reversed_map = {v:k for k,v in self.merges.items()}
+        self.reversed_map = {v: k for k, v in self.merges.items()}
         print(self.reversed_map)
 
-
-
-
-    def decode(self, ids):
+    def decode(self, ids: list[int]) -> str:
         def decode_recursive(ids):
             _decoded_seq = []
             for token in ids:
                 if token in self.reversed_map.keys():
                     pair = self.reversed_map[token]
                     _decoded_seq += decode_recursive(list(pair))
-                else :
+                else:
                     _decoded_seq += [token]
             return _decoded_seq
-        
+
         out = decode_recursive(ids)
         out = bytes(out)
         return out.decode("utf8", errors="replace")
 
-
-
-    def encode(self, text):
+    def encode(self, text: str) -> list[int]:
         tokens = text.encode("utf-8")
         tokens = list(map(int, tokens))
         ids = list(tokens)
-
 
         while True:
             encoded_seq_ = []
             i = 0
             found_pairs = False
-            while i<len(ids):
-                if i==len(ids)-1:
+            while i < len(ids):
+                if i == len(ids) - 1:
                     encoded_seq_.append(ids[i])
                     break
-                pair = (ids[i], ids[i+1])
+                pair = (ids[i], ids[i + 1])
                 if pair in self.merges.keys():
                     tok = self.merges[pair]
                     encoded_seq_.append(tok)
                     found_pairs = True
-                    i+=2
+                    i += 2
                 else:
                     encoded_seq_.append(ids[i])
-                    i+=1
+                    i += 1
             ids = encoded_seq_
 
             if not found_pairs:
                 return ids
-
