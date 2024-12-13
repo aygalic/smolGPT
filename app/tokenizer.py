@@ -1,5 +1,6 @@
 """draft for implementing tokenization"""
-from collections import Counter
+from smolgpt.tokenizer.bpe_tokenize import PBETokenize
+
 text = """the full recipe that defines how your nn.Modules interact.
 
     The training_step defines how the nn.Modules interact together.
@@ -18,131 +19,15 @@ class LitAutoEncoder(L.LightningModule):
         x = x.view(x.size(0), -1)
         z = self.encoder#😎"""
 
-tokens = text.encode("utf-8")
-tokens = list(map(int, tokens))
-print(text)
-print("-----")
-print(len(text))
-print("-----")
+tokenizer = PBETokenize()
+tokenizer.fit(text)
 
-
-print(tokens)
-print("-----")
-print(len(tokens))
-print("-----")
-
-# byte pair encoding
-
-def get_stats(ids):
-    return Counter(zip(ids, ids[1:]))
-
-stats = get_stats(tokens)
-print(stats)
-print(sorted(((v,k) for k,v in stats.items()), reverse=True) )
-
-top_pair = max(stats, key = stats.get)
-print(top_pair)
-
-def merge(ids, pair, idx):
-    newids = []
-    i=0
-    while i<len(ids):
-        if i<len(ids)-1 and ids[i] == pair[0] and  ids[i+1] == pair[1]:
-            newids.append(idx)
-            i += 2
-        else:
-            newids.append(ids[i])
-            i += 1
-    return newids
-
-print(merge([5,6,6,7,9,1], (6,7), 99))
-
-tokens2 = merge(tokens, top_pair, 256)
-print(tokens2)
-print(len(tokens2))
-
-# -----
-
-vocab_size = 276
-num_merges = vocab_size - 256 # original number of tokens
-ids = list(tokens)
-merges = {}
-for i in range(num_merges):
-    stats = get_stats(ids)
-    pair = max(stats, key = stats.get)
-    idx = 256 + i
-    print(f"merged {pair=} into new token {idx=}")
-    ids= merge(ids, pair, idx)
-    merges[pair]=idx
-
-print(ids)
-print(len(tokens))
-print(len(ids))
-print(f"compression ration = {len(tokens)/len(ids)}")
-
-# ---- decoding
-
-reversed_map = {v:k for k,v in merges.items()}
-print(reversed_map)
-
-
-def decode(ids):
-    def decode_recursive(ids):
-        _decoded_seq = []
-        for token in ids:
-            if token in reversed_map.keys():
-                pair = reversed_map[token]
-                _decoded_seq += decode_recursive(list(pair))
-            else :
-                _decoded_seq += [token]
-        return _decoded_seq
-    
-    out = decode_recursive(ids)
-    out = bytes(out)
-    return out.decode("utf8", errors="replace")
-
-decoded_seq = decode(ids)
-
-print(decoded_seq)
-print(len(decoded_seq))
-
-
-def encode(text):
-    tokens = text.encode("utf-8")
-    tokens = list(map(int, tokens))
-    ids = list(tokens)
-
-
-    while True:
-        encoded_seq_ = []
-        i = 0
-        found_pairs = False
-        while i<len(ids):
-            if i==len(ids)-1:
-                encoded_seq_.append(ids[i])
-                break
-            pair = (ids[i], ids[i+1])
-            if pair in merges.keys():
-                tok = merges[pair]
-                encoded_seq_.append(tok)
-                found_pairs = True
-                i+=2
-            else:
-                encoded_seq_.append(ids[i])
-                i+=1
-        ids = encoded_seq_
-
-        if not found_pairs:
-            return ids
-
-
-
-print(f'{encode(text)=}')
-out = decode(encode(text))
+print(f'{tokenizer.encode(text)=}')
+out = tokenizer.decode(tokenizer.encode(text))
 
 print(out)
 
-print("compression ratio =",len(decode(encode(text)))/ len(encode(text)) )
+print("compression ratio =",len(tokenizer.decode(tokenizer.encode(text)))/ len(tokenizer.encode(text)) )
 
 
 # special tokens
