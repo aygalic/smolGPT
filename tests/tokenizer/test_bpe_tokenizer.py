@@ -49,19 +49,19 @@ Add your own test methods (they must start with test_)"""
 
     def test_fit(self):
         """Test case demonstrating the ability to train the tokenizer"""
-        tokenizer = BPETokenizer()
+        tokenizer = BPETokenizer(vocab_size=300)
         tokenizer.fit(self.training_text)
 
     def test_encode(self):
         """The tokenizer should be able to compress the representation of a text"""
-        tokenizer = BPETokenizer()
+        tokenizer = BPETokenizer(vocab_size=300)
         tokenizer.fit(self.training_text)
         encoded = tokenizer.encode(self.test_text)
         assert len(encoded) < len(self.test_text)
 
     def test_decode(self):
         """The tokenizer should be such that decode(encode(text)) == text"""
-        tokenizer = BPETokenizer()
+        tokenizer = BPETokenizer(vocab_size=300)
         tokenizer.fit(self.training_text)
         decoded = tokenizer.decode(tokenizer.encode(self.test_text))
         assert decoded == self.test_text
