@@ -2,3 +2,4 @@
 *hparams*
 *.ckpt
 .vscode
+tokenizer/vocab/*

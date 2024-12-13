@@ -5,8 +5,6 @@ from datasets import load_dataset
 
 ds = load_dataset("rahular/simple-wikipedia")
 
-
-
 text = "".join(ds["train"][:1000]["text"])
 
 #breakpoint()
@@ -20,6 +18,6 @@ out = tokenizer.decode(tokenizer.encode(text))
 print(out)
 print("compression ratio =",len(tokenizer.decode(tokenizer.encode(text)))/ len(tokenizer.encode(text)) )
 
-
+tokenizer.save("tokenizer/vocab/")
 # special tokens
 GPT4_SPLIT_PATTERN = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""
