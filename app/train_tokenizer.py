@@ -7,13 +7,11 @@ ds = load_dataset("rahular/simple-wikipedia")
 
 
 
-text = "".join(ds["train"][:10000]["text"])
+text = "".join(ds["train"][:1000]["text"])
 
+#breakpoint()
 
-breakpoint()
-
-
-tokenizer = BPETokenizer()
+tokenizer = BPETokenizer(vocab_size = 1000)
 tokenizer.fit(text)
 
 print(f'{tokenizer.encode(text)=}')

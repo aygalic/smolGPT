@@ -1,8 +1,10 @@
 from collections import Counter
-
+from tqdm import tqdm
 
 class BPETokenizer:
-    def __init__(self):
+    def __init__(self, vocab_size:int):
+        assert vocab_size >= 255
+        self.vocab_size=vocab_size
         self.merges = {}
 
     def _get_stats(self, ids: list[int]) -> dict[tuple[int, int], int]:
@@ -23,21 +25,18 @@ class BPETokenizer:
     def fit(self, text: str):
         tokens = text.encode("utf-8")
         tokens = list(map(int, tokens))
-
-        vocab_size = 276
-        num_merges = vocab_size - 256  # original number of tokens
+        num_merges = self.vocab_size - 256  # original number of tokens
         ids = list(tokens)
-        for i in range(num_merges):
+        for i in tqdm(range(num_merges)):
             stats = self._get_stats(ids)
             pair = max(stats, key=stats.get)
             idx = 256 + i
-            print(f"merged {pair=} into new token {idx=}")
             ids = self._merge(ids, pair, idx)
             self.merges[pair] = idx
 
-        print(ids)
-        print(len(tokens))
-        print(len(ids))
+        #print(ids)
+        #print(len(tokens))
+        #print(len(ids))
         print(f"compression ration = {len(tokens)/len(ids)}")
 
         # ---- decoding
