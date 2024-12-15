@@ -1,0 +1,32 @@
+# config.yaml
+seed_everything: 123
+
+model:
+#  vocab_size: null  # Will be set automatically from data module
+  n_embed: 128  # 4 * 32
+  block_size: 256
+  n_heads: 4
+  n_layer: 2
+  dropout: 0.2
+  learning_rate: 3e-4
+  device_type: "mps"
+
+data:
+  path_to_dir: "./data/corpus.txt"
+  batch_size: 64
+  block_size: 256
+  tokenizer_type: "BPE"
+  tokenizer_path: "tokenizer/vocab/"
+
+trainer:
+  accelerator: "mps"
+  max_steps: 50
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: "checkpoints"
+        filename: "transformer-{step}"
+        save_top_k: 3
+        verbose: true
+        monitor: "train_loss"
+        mode: "min"

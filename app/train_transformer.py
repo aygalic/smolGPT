@@ -1,6 +1,31 @@
+from lightning.pytorch.cli import LightningCLI
+from smolgpt.data.data_module import TinyShakespeareData
+from smolgpt.model.transformer import Transformer
+from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
+from smolgpt.tokenizer.ascii_tokenizer import ASCIITokenizer
+
+def cli_main():
+    # The LightningCLI will automatically create the Trainer from config
+    cli = LightningCLI(
+        model_class=Transformer,
+        datamodule_class=TinyShakespeareData,
+        save_config_callback=None,
+        parser_kwargs={"parser_mode": "yaml"}
+    )
+
+if __name__ == "__main__":
+    cli_main()
+
+
+
+
+
 """Train transformer with checkpointing"""
 
+'''
+import argparse
 import json
+import yaml
 
 import torch
 from lightning import Trainer
@@ -8,7 +33,12 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 
 from smolgpt.data.data_module import TinyShakespeareData
 from smolgpt.model.transformer import Transformer
-from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
+
+
+
+
+
+
 
 DEVICE = "mps"
 torch.manual_seed(123)
@@ -21,9 +51,14 @@ n_embed = n_heads * 32
 n_layer = 2
 dropout = 0.2
 
+with open("model_config.yaml") as f:
+    config = yaml.safe_load(f)
 
-# Initialize tokenizer and data module
-tokenizer = BPETokenizer.load("tokenizer/vocab/")
+
+
+tokenizer_name = "BPE"
+
+
 data_module = TinyShakespeareData(
     path_to_dir="./data/corpus.txt",
     batch_size=batch_size,
@@ -67,3 +102,6 @@ model_info = {
 
 with open("checkpoints/model_config.json", "w") as f:
     json.dump(model_info, f)
+
+    
+    '''

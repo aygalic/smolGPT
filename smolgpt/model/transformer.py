@@ -8,29 +8,39 @@ import lightning as L
 class Transformer(L.LightningModule):
     def __init__(
             self,
-            vocab_size: int,
+            #vocab_size: int,
             n_embed: int,
             block_size: int,
             n_heads: int,
             n_layer: int,
             dropout: float,
             learning_rate: float = 3e-4,
-            device: str = "mps"):
+            device_type: str = "mps"  # Changed from device to device_type
+            ):
         super().__init__()
         self.save_hyperparameters()
-        self.device = device
+        self.device_type = device_type
+        self.n_embed = n_embed
         self.learning_rate = learning_rate
         self.block_size = block_size
-        self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
-        self.position_embedding_table = nn.Embedding(block_size, n_embed)
-        self.blocks = nn.Sequential(*[Block(n_embed, n_heads, block_size, dropout) for _ in range(n_layer)])
-        self.ln_f = nn.LayerNorm(n_embed)
-        self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
+        self.token_embedding_table = None
+       # self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
+        self.position_embedding_table = nn.Embedding(block_size, self.n_embed)
+        self.blocks = nn.Sequential(*[Block(self.n_embed, n_heads, block_size, dropout) for _ in range(n_layer)])
+        self.ln_f = nn.LayerNorm(self.n_embed)
+        self.lm_head = None
+        #self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
+
+    def setup(self, stage=None):
+        if self.token_embedding_table is None:
+            vocab_size = self.trainer.datamodule.tokenizer.vocab_size
+            self.token_embedding_table = nn.Embedding(vocab_size, self.n_embed)
+            self.lm_head = nn.Linear(self.n_embed, vocab_size)
 
     def forward(self, idx):
         B, T = idx.shape
         tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
-        pos_emb = self.position_embedding_table(torch.arange(T, device=self.device)) # (T, C) C = n_embed
+        pos_emb = self.position_embedding_table(torch.arange(T, device=self.device_type)) # (T, C) C = n_embed
         x = tok_emb + pos_emb # (B, T, C)
         x = self.blocks(x) # apply self attention (B, T, C)
         x = self.ln_f(x) # (B, T, C)
