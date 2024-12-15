@@ -4,12 +4,22 @@ from smolgpt.model.block import Block
 from torch.nn import functional as F
 import lightning as L
 
-DEVICE = "mps"
-learning_rate = 3e-4
 
 class Transformer(L.LightningModule):
-    def __init__(self, vocab_size, n_embed, block_size, n_heads, n_layer, dropout):
+    def __init__(
+            self,
+            vocab_size: int,
+            n_embed: int,
+            block_size: int,
+            n_heads: int,
+            n_layer: int,
+            dropout: float,
+            learning_rate: float = 3e-4,
+            device: str = "mps"):
         super().__init__()
+        self.save_hyperparameters()
+        self.device = device
+        self.learning_rate = learning_rate
         self.block_size = block_size
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
         self.position_embedding_table = nn.Embedding(block_size, n_embed)
@@ -20,7 +30,7 @@ class Transformer(L.LightningModule):
     def forward(self, idx):
         B, T = idx.shape
         tok_emb = self.token_embedding_table(idx) # (B, T, C) C = n_embed
-        pos_emb = self.position_embedding_table(torch.arange(T, device=DEVICE)) # (T, C) C = n_embed
+        pos_emb = self.position_embedding_table(torch.arange(T, device=self.device)) # (T, C) C = n_embed
         x = tok_emb + pos_emb # (B, T, C)
         x = self.blocks(x) # apply self attention (B, T, C)
         x = self.ln_f(x) # (B, T, C)
@@ -37,7 +47,7 @@ class Transformer(L.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr = learning_rate)
+        return torch.optim.AdamW(self.parameters(), lr = self.learning_rate)
 
     def generate(self, idx, max_new_tokens):
         # idx shape is (B,T) array of indices in the current context
