@@ -1,65 +1,78 @@
-"""Script to load and use trained model"""
-
+from lightning.pytorch.cli import LightningCLI
 import torch
 from smolgpt.model.transformer import Transformer
 from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
-import json
 
-def load_trained_model(checkpoint_path, config_path):
-    # Load model configuration
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-    
-    # Initialize model with saved configuration
-    model = Transformer(
-        config['vocab_size'],
-        config['n_embed'],
-        config['block_size'],
-        config['n_heads'],
-        config['n_layer'],
-        config['dropout']
-    )
-    
-    # Load state dict from checkpoint
-    checkpoint = torch.load(checkpoint_path)
-    model.load_state_dict(checkpoint['state_dict'])
-    
-    return model
+class GenerationCLI(LightningCLI):
+    def add_arguments_to_parser(self, parser):
+        parser.add_argument("--checkpoint_path", type=str, required=True)
+        parser.add_argument("--prompt", type=str, default="Once upon a time")
+        parser.add_argument("--max_tokens", type=int, default=1000)
+        parser.add_argument("--tokenizer_path", type=str, default="tokenizer/vocab/")
 
-def generate_text(model, tokenizer, prompt="", max_tokens=1000, device="mps"):
-    model = model.to(device)
+def generate_text(model, tokenizer, prompt="", max_tokens=1000):
     model.eval()
-    
     if prompt:
-        context = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long, device=device)
+        context = torch.tensor([tokenizer.encode(prompt)], dtype=torch.long, device=model.device)
     else:
-        context = torch.zeros((1, 1), dtype=torch.long, device=device)
+        context = torch.zeros((1, 1), dtype=torch.long, device=model.device)
     
     with torch.no_grad():
         output = model.generate(context, max_new_tokens=max_tokens)[0].tolist()
-    
     return tokenizer.decode(output)
 
-if __name__ == "__main__":
-    DEVICE = "mps"
-    
-    # Load tokenizer
-    tokenizer = BPETokenizer.load("tokenizer/vocab/")
-    
-    # Load model
-    model = load_trained_model(
-        checkpoint_path="lightning_logs/version_9/checkpoints/epoch=0-step=5000.ckpt",  # Replace XXXX with actual step number
-        config_path="checkpoints/model_config.json"
+def main():
+    # Initialize CLI
+    cli = GenerationCLI(
+        model_class=Transformer,
+        save_config_callback=None,
+        run=False
     )
+    
+    # Load tokenizer first to get vocab_size
+    tokenizer = BPETokenizer.load(cli.config["tokenizer_path"])
+    vocab_size = tokenizer.vocab_size
+    
+    # Load checkpoint
+    checkpoint = torch.load(
+        cli.config["checkpoint_path"],
+        map_location=torch.device('mps')
+    )
+    
+    # Extract hyperparameters from checkpoint
+    hparams = checkpoint['hyper_parameters']
+    
+    # Create model with hyperparameters from checkpoint
+    model = Transformer(
+        n_embed=hparams['n_embed'],
+        block_size=hparams['block_size'],
+        n_heads=hparams['n_heads'],
+        n_layer=hparams['n_layer'],
+        dropout=hparams['dropout'],
+        learning_rate=hparams['learning_rate'],
+        device_type=hparams['device_type']
+    )
+    
+    # Initialize the token_embedding_table and lm_head before loading state dict
+    model.token_embedding_table = torch.nn.Embedding(vocab_size, hparams['n_embed'])
+    model.lm_head = torch.nn.Linear(hparams['n_embed'], vocab_size)
+    
+    # Load state dict
+    model.load_state_dict(checkpoint['state_dict'])
+    
+    # Set up model for generation
+    model = model.to('mps')
     
     # Generate text
     output = generate_text(
         model,
         tokenizer,
-        prompt="Once upon a time",  # Optional prompt
-        max_tokens=1000,
-        device=DEVICE
+        prompt=cli.config["prompt"],
+        max_tokens=cli.config["max_tokens"]
     )
     
-    print("Generated text:")
+    print("\nGenerated text:")
     print(output)
+
+if __name__ == "__main__":
+    main()

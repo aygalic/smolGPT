@@ -19,14 +19,24 @@ class Transformer(L.LightningModule):
             ):
         super().__init__()
         self.save_hyperparameters()
-        self.device_type = device_type
-        self.n_embed = n_embed
-        self.learning_rate = learning_rate
-        self.block_size = block_size
+        #self.n_embed = n_embed
+        #self.device_type = device_type
+        #self.learning_rate = learning_rate
+        #self.block_size = block_size
+
+        # Now reference hyperparameters through self.hparams
+        self.n_heads = self.hparams.n_heads
+        self.n_layer = self.hparams.n_layer
+        self.n_embed = self.hparams.n_embed
+        self.dropout = self.hparams.dropout
+        self.block_size = self.hparams.block_size
+        self.device_type = self.hparams.device_type
+        self.learning_rate = self.hparams.learning_rate
+        
         self.token_embedding_table = None
        # self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
-        self.position_embedding_table = nn.Embedding(block_size, self.n_embed)
-        self.blocks = nn.Sequential(*[Block(self.n_embed, n_heads, block_size, dropout) for _ in range(n_layer)])
+        self.position_embedding_table = nn.Embedding(self.block_size, self.n_embed)
+        self.blocks = nn.Sequential(*[Block(self.n_embed, self.n_heads, self.block_size, self.dropout) for _ in range(self.n_layer)])
         self.ln_f = nn.LayerNorm(self.n_embed)
         self.lm_head = None
         #self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
@@ -54,6 +64,7 @@ class Transformer(L.LightningModule):
         logits = logits.view(B*T, C)
         targets = targets.view(B*T)
         loss = F.cross_entropy(logits, targets)
+        self.log('train_loss', loss, prog_bar=True)
         return loss
 
     def configure_optimizers(self):

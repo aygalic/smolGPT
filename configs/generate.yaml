@@ -1,0 +1,15 @@
+# configs/generate.yaml
+model:
+  n_embed: 128
+  block_size: 256
+  n_heads: 4
+  n_layer: 2
+  dropout: 0.2
+  learning_rate: 3e-4
+  device_type: "mps"
+
+
+checkpoint_path: "checkpoints/transformer-epoch=00.ckpt"  # or use last.ckpt
+tokenizer_path: "tokenizer/vocab/"
+prompt: "Once upon a time"
+max_tokens: 1000
