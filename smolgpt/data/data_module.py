@@ -26,7 +26,7 @@ class TinyShakespeareData(L.LightningDataModule):
         batch_size: int = 32,
         block_size: int = 256,
         train_val_split: tuple = (0.9, 0.1),
-        tokenizer_type: str = "BPE",
+        tokenizer_type: str = None,
         tokenizer_path: str = "tokenizer/vocab/",
     ):
         super().__init__()

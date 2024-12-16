@@ -11,6 +11,7 @@ class Transformer(L.LightningModule):
             #vocab_size: int,
             n_embed: int,
             block_size: int,
+            vocab_size: int,
             n_heads: int,
             n_layer: int,
             dropout: float,
@@ -19,12 +20,8 @@ class Transformer(L.LightningModule):
             ):
         super().__init__()
         self.save_hyperparameters()
-        #self.n_embed = n_embed
-        #self.device_type = device_type
-        #self.learning_rate = learning_rate
-        #self.block_size = block_size
 
-        # Now reference hyperparameters through self.hparams
+        # reference hyperparameters through self.hparams
         self.n_heads = self.hparams.n_heads
         self.n_layer = self.hparams.n_layer
         self.n_embed = self.hparams.n_embed
@@ -32,20 +29,14 @@ class Transformer(L.LightningModule):
         self.block_size = self.hparams.block_size
         self.device_type = self.hparams.device_type
         self.learning_rate = self.hparams.learning_rate
-        
-        self.token_embedding_table = None
-       # self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
+        self.vocab_size = self.hparams.vocab_size
+
+        self.token_embedding_table = nn.Embedding(self.vocab_size, self.n_embed)
         self.position_embedding_table = nn.Embedding(self.block_size, self.n_embed)
         self.blocks = nn.Sequential(*[Block(self.n_embed, self.n_heads, self.block_size, self.dropout) for _ in range(self.n_layer)])
         self.ln_f = nn.LayerNorm(self.n_embed)
-        self.lm_head = None
-        #self.lm_head = nn.Linear(n_embed, vocab_size) # Language Model
+        self.lm_head = nn.Linear(self.n_embed, self.vocab_size) # Language Model
 
-    def setup(self, stage=None):
-        if self.token_embedding_table is None:
-            vocab_size = self.trainer.datamodule.tokenizer.vocab_size
-            self.token_embedding_table = nn.Embedding(vocab_size, self.n_embed)
-            self.lm_head = nn.Linear(self.n_embed, vocab_size)
 
     def forward(self, idx):
         B, T = idx.shape

@@ -1,3 +1,35 @@
-{
-    
-}
+# configs/basic.yaml
+seed_everything: 123
+
+model:
+  n_embed: 128
+  block_size: 256
+  n_heads: 4
+  n_layer: 2
+  dropout: 0.2
+  learning_rate: 3e-4
+  device_type: "mps"
+  vocab_size : 1000 # last tokenizer was trained on 1000 words, can't be dynamically set
+
+data:
+  path_to_dir: "./data/corpus.txt"
+  batch_size: 64
+  block_size: 256
+  tokenizer_type: "BPE"
+  tokenizer_path: "tokenizer/vocab/"
+
+trainer:
+  accelerator: "mps"
+  max_steps: 50
+  enable_checkpointing: true
+  default_root_dir: "checkpoints"
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: "checkpoints"
+        filename: "transformer-{epoch:02d}"
+        save_top_k: 1
+        monitor: "train_loss"
+        mode: "min"
+        save_last: true
+        every_n_train_steps: 10  # Save more frequently for testing

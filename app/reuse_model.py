@@ -2,6 +2,7 @@ from lightning.pytorch.cli import LightningCLI
 import torch
 from smolgpt.model.transformer import Transformer
 from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
+from smolgpt.tokenizer.ascii_tokenizer import ASCIITokenizer
 
 class GenerationCLI(LightningCLI):
     def add_arguments_to_parser(self, parser):
@@ -30,8 +31,10 @@ def main():
     )
     
     # Load tokenizer first to get vocab_size
-    tokenizer = BPETokenizer.load(cli.config["tokenizer_path"])
-    vocab_size = tokenizer.vocab_size
+    if cli.config["tokenizer_path"]:
+        tokenizer = BPETokenizer.load(cli.config["tokenizer_path"])
+    else:
+        tokenizer = ASCIITokenizer()
     
     # Load checkpoint
     checkpoint = torch.load(
@@ -50,12 +53,11 @@ def main():
         n_layer=hparams['n_layer'],
         dropout=hparams['dropout'],
         learning_rate=hparams['learning_rate'],
-        device_type=hparams['device_type']
+        device_type=hparams['device_type'],
+        vocab_size  =hparams['vocab_size']
+
     )
     
-    # Initialize the token_embedding_table and lm_head before loading state dict
-    model.token_embedding_table = torch.nn.Embedding(vocab_size, hparams['n_embed'])
-    model.lm_head = torch.nn.Linear(hparams['n_embed'], vocab_size)
     
     # Load state dict
     model.load_state_dict(checkpoint['state_dict'])

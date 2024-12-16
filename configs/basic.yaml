@@ -9,12 +9,13 @@ model:
   dropout: 0.2
   learning_rate: 3e-4
   device_type: "mps"
+  vocab_size : 256
 
 data:
   path_to_dir: "./data/corpus.txt"
   batch_size: 64
   block_size: 256
-  tokenizer_type: "BPE"
+  tokenizer_type: None
   tokenizer_path: "tokenizer/vocab/"
 
 trainer:
