@@ -9,7 +9,7 @@ model:
   dropout: 0.2
   learning_rate: 3e-4
   device_type: "mps"
-  vocab_size : 256
+  vocab_size : 65
 
 data:
   path_to_dir: "./data/corpus.txt"
@@ -33,3 +33,14 @@ trainer:
         mode: "min"
         save_last: true
         every_n_train_steps: 10  # Save more frequently for testing
+      
+#predict:
+#  accelerator: "mps"  # Use same accelerator as training
+#  devices: 1
+#  ckpt_path: "checkpoints/transformer-epoch=00-v3.ckpt"  # Path to the checkpoint you want to use
+#  max_new_tokens: 100  # Default number of tokens to generate
+#  temperature: 1.0  # Optional: Add temperature for sampling
+#  batch_size: 1  # Typically 1 for generation
+#  use_beam_search: false  # Optional: Enable beam search
+#  num_beams: 1  # Optional: Number of beams if beam search is enabled
+#  input_max_length: 256  # Maximum input sequence length  

@@ -58,6 +58,19 @@ class Transformer(L.LightningModule):
         self.log('train_loss', loss, prog_bar=True)
         return loss
 
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        """
+        In Lightning's predict_step, batch can be a tuple where we pack additional arguments
+        """
+        if isinstance(batch, tuple):
+            idx, max_new_tokens = batch
+        else:
+            idx = batch
+            max_new_tokens = 100  # default value if not specified
+            
+        return self.generate(idx, max_new_tokens)
+
+
     def configure_optimizers(self):
         return torch.optim.AdamW(self.parameters(), lr = self.learning_rate)
 
