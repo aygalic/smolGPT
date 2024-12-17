@@ -19,7 +19,7 @@ class PredictionOutputCallback(Callback):
         # Process all outputs
         for output in self.outputs:
             decoded_text = tokenizer.decode(output[0].tolist())
-            print(decoded_text)
+            print("".join(decoded_text))
         print("="*50)
         
         # Clear outputs for next prediction
