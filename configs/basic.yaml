@@ -15,7 +15,7 @@ data:
   path_to_dir: "./data/corpus.txt"
   batch_size: 64
   block_size: 256
-  tokenizer_type: None
+  tokenizer_type: "ASCII"
   tokenizer_path: "tokenizer/vocab/"
   predict_prompt: "hello"
 
@@ -28,7 +28,7 @@ trainer:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         dirpath: "checkpoints"
-        filename: "transformer-{epoch:02d}"
+        filename: "transformer-{tokenizer_type}-{epoch:02d}"
         save_top_k: 1
         monitor: "train_loss"
         mode: "min"

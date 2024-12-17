@@ -17,7 +17,7 @@ class TextDataset(Dataset):
         y = self.data[idx + 1 : idx + self.block_size + 1]
         return x, y
 
-class GenerationDataset(Dataset):
+class UserPromptGenerationDataset(Dataset):
     def __init__(self, prompt, block_size):
         self.prompt = prompt
         self.block_size = block_size
@@ -41,6 +41,7 @@ class TinyShakespeareData(L.LightningDataModule):
         predict_prompt: str = "Once upon a time"  # Default prompt for prediction
     ):
         super().__init__()
+        assert tokenizer_type in ["ASCII", "BPE"]
         self.save_hyperparameters()
         self.path_to_dir = path_to_dir
         self.batch_size = batch_size
@@ -51,8 +52,7 @@ class TinyShakespeareData(L.LightningDataModule):
         # Initialize tokenizer
         if tokenizer_type == "BPE":
             self.tokenizer = BPETokenizer.load(tokenizer_path)
-        else:
-            print("defaulting to ASCII Tokenizer")
+        elif tokenizer_type == "ASCII":
             self.tokenizer = ASCIITokenizer()
     
     def prepare_data(self):
@@ -64,7 +64,7 @@ class TinyShakespeareData(L.LightningDataModule):
         if stage == "predict":
             # For prediction, we only need to prepare the prompt
             prompt_encoded = torch.tensor(self.tokenizer.encode(self.predict_prompt), dtype=torch.long)
-            self.predict_dataset = GenerationDataset(prompt_encoded, self.block_size)
+            self.predict_dataset = UserPromptGenerationDataset(prompt_encoded, self.block_size)
             return
             
         # Regular training setup
