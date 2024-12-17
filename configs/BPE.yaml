@@ -17,6 +17,7 @@ data:
   block_size: 256
   tokenizer_type: "BPE"
   tokenizer_path: "tokenizer/vocab/"
+  predict_prompt: "hello"
 
 trainer:
   accelerator: "mps"
