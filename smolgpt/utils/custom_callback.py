@@ -1,6 +1,7 @@
 from lightning.pytorch.callbacks import Callback
 import glob
 import os
+import torch
 
 class PredictionOutputCallback(Callback):
     def __init__(self):
@@ -43,7 +44,10 @@ class AutoLoadLastCheckpointCallback(Callback):
                 checkpoint_files = [f for f in checkpoint_files if self.tokenizer_type in f]
             if checkpoint_files:
                 latest_checkpoint = max(checkpoint_files, key=os.path.getmtime)
-                trainer.ckpt_path = latest_checkpoint
-                print(f"Automatically loading checkpoint: {latest_checkpoint}")
+                trainer.ckpt_path = latest_checkpoint                
+                # FIXME: should use lightning api to load checkpoint instead of this hack
+                checkpoint = torch.load(latest_checkpoint)
+                pl_module.load_state_dict(checkpoint['state_dict'])
+                print(f"Automatically loading checkpoint: {trainer.ckpt_path}")
             else:
                 print("No checkpoint were found!!")
