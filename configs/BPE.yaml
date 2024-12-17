@@ -34,3 +34,5 @@ trainer:
         mode: "min"
         save_last: true
         every_n_train_steps: 10  # Save more frequently for testing
+    - class_path: smolgpt.utils.custom_callback.PredictionOutputCallback
+      init_args: {}
