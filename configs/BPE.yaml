@@ -21,14 +21,14 @@ data:
 
 trainer:
   accelerator: "mps"
-  max_steps: 50
+  max_steps: 5000
   enable_checkpointing: true
   default_root_dir: "checkpoints"
   callbacks:
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         dirpath: "checkpoints"
-        filename: "transformer-{tokenizer_type}-{epoch:02d}"
+        filename: "BPE-transformer-{step:02d}"
         save_top_k: 1
         monitor: "train_loss"
         mode: "min"
@@ -36,3 +36,5 @@ trainer:
         every_n_train_steps: 10  # Save more frequently for testing
     - class_path: smolgpt.utils.custom_callback.PredictionOutputCallback
       init_args: {}
+    - class_path: smolgpt.utils.custom_callback.AutoLoadLastCheckpointCallback
+      init_args: {tokenizer_type : "BPE"}
