@@ -78,15 +78,10 @@ class Transformer(L.LightningModule):
         # idx shape is (B,T) array of indices in the current context
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -self.block_size:]
-            # get preds:
             logits = self(idx_cond)
-            # focus on last time step:
             logits = logits[:, -1, :] # (B, C)
-            # softmax for probs
             probs = F.softmax(logits, dim = -1) # (B, C)
-            # sample from dist:
             idx_next = torch.multinomial(probs, num_samples=1) # (B, 1)
-            # append the sampled token to the running sequence 
             idx = torch.cat((idx, idx_next), dim = 1) # (B, T+1)
         return idx
     
