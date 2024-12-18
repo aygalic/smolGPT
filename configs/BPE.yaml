@@ -8,7 +8,6 @@ model:
   n_layer: 2
   dropout: 0.2
   learning_rate: 3e-4
-  device_type: "mps"
   vocab_size : 1000 # last tokenizer was trained on 1000 words, can't be dynamically set
 
 data:
@@ -21,7 +20,7 @@ data:
 
 trainer:
   accelerator: "mps"
-  max_steps: 5000
+  max_steps: 50
   enable_checkpointing: true
   default_root_dir: "checkpoints"
   callbacks:
