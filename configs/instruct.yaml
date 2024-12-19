@@ -11,9 +11,8 @@ model:
   vocab_size : 1000 # last tokenizer was trained on 1000 words, can't be dynamically set
 
 data:
-  class_path : smolgpt.data.data_module.TinyShakespeareData
+  class_path : smolgpt.data.instruct_data_module.InstructData
   init_args:
-    path_to_dir: "./data/corpus.txt"
     batch_size: 64
     block_size: 256
     tokenizer_type: "BPE"

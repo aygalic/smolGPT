@@ -11,12 +11,14 @@ model:
   vocab_size : 65
 
 data:
-  path_to_dir: "./data/corpus.txt"
-  batch_size: 64
-  block_size: 256
-  tokenizer_type: "ASCII"
-  tokenizer_path: "tokenizer/vocab/"
-  predict_prompt: "hello"
+  class_path : smolgpt.data.data_module.TinyShakespeareData
+  init_args:
+    path_to_dir: "./data/corpus.txt"
+    batch_size: 64
+    block_size: 256
+    tokenizer_type: "ASCII"
+    tokenizer_path: "tokenizer/vocab/"
+    predict_prompt: "hello"
 
 trainer:
   accelerator: "mps"
