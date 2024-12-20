@@ -43,7 +43,18 @@ class Transformer(L.LightningModule):
         B, T, C = logits.shape
         logits = logits.view(B*T, C)
         targets = targets.view(B*T)
-        loss = F.cross_entropy(logits, targets)
+
+
+
+        #loss = F.cross_entropy(logits, targets)
+        # Only compute loss on non-masked positions (where targets != -100)
+        valid_positions = targets != -100
+        loss = F.cross_entropy(
+            logits[valid_positions], 
+            targets[valid_positions]
+        )
+
+
         self.log('train_loss', loss, prog_bar=True)
         return loss
 
@@ -74,3 +85,13 @@ class Transformer(L.LightningModule):
             idx = torch.cat((idx, idx_next), dim = 1) # (B, T+1)
         return idx
     
+    def generate_response(self, prompt, max_new_tokens):
+        # Encode the prompt
+        prompt_ids = torch.tensor(self.tokenizer.encode(prompt), device=self.device).unsqueeze(0)
+        
+        # Generate continuation
+        generated_ids = self.generate(prompt_ids, max_new_tokens)
+        
+        # Decode only the new tokens (excluding prompt)
+        response_ids = generated_ids[0, len(prompt_ids[0]):]
+        return self.tokenizer.decode(response_ids.tolist())
