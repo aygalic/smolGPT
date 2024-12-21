@@ -1,5 +1,5 @@
 import lightning as L
-
+import torch
 from torch.utils.data import DataLoader, random_split
 from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
 from smolgpt.tokenizer.ascii_tokenizer import ASCIITokenizer
@@ -29,7 +29,9 @@ class InstructData(L.LightningDataModule):
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
-        
+        self.predict_dataset = None
+        self.predict_prompt = predict_prompt
+
         # Initialize tokenizer
         if tokenizer_type == "BPE":
             self.tokenizer = BPETokenizer.load(tokenizer_path)
@@ -45,7 +47,16 @@ class InstructData(L.LightningDataModule):
         """Set up the datasets for each stage"""
         # Load the dataset
         dataset = load_dataset(self.dataset_name)
-        
+
+        if stage == "predict":
+            # For prediction, we only need to prepare the prompt
+            prompt_encoded = torch.tensor(
+                self.tokenizer.encode(self.predict_prompt), dtype=torch.long
+            )
+            self.predict_dataset = UserPromptDataset(prompt_encoded, self.block_size)
+            return
+
+
         if stage == "fit" or stage is None:
             # Split training data
             train_val = dataset["train"].train_test_split(
@@ -91,5 +102,12 @@ class InstructData(L.LightningDataModule):
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
+            shuffle=False,
+        )
+    
+    def predict_dataloader(self):
+        return DataLoader(
+            self.predict_dataset,
+            batch_size=1,  # We generate one sequence at a time
             shuffle=False,
         )
