@@ -50,8 +50,10 @@ class InstructData(L.LightningDataModule):
 
         if stage == "predict":
             # For prediction, we only need to prepare the prompt
+            prompt = f"System: You are an AI agent that provide useful help.\nQuestion: {self.predict_prompt}\n"
+            full_prompt = prompt + f"Response:"
             prompt_encoded = torch.tensor(
-                self.tokenizer.encode(self.predict_prompt), dtype=torch.long
+                self.tokenizer.encode(full_prompt), dtype=torch.long
             )
             self.predict_dataset = UserPromptDataset(prompt_encoded, self.block_size)
             return
