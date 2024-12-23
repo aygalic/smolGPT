@@ -10,6 +10,10 @@ class TestUserPromptDataset(unittest.TestCase):
         Prepare text for training and inference.
         """
         self.basic_prompt: str = "Hello, I am very much a prompt."
+        self.long_prompt: str = """Hey I am a very long prompt asking you for a lot of attention.
+        This might slip away from your context window and not be taken into account when
+        processing. To make sure this is too long I am just going to write one more
+        useless sentence."""
         self.block_size = 256
 
     def tearDown(self):
@@ -26,6 +30,12 @@ class TestUserPromptDataset(unittest.TestCase):
         dataset = UserPromptDataset(self.basic_prompt, self.block_size)
         prompt = next(iter(dataset))
         assert prompt==self.basic_prompt # only works if len(prompt)<block_size
+
+    def testLongPrompt(self):
+        dataset = UserPromptDataset(self.long_prompt, self.block_size)
+        prompt = next(iter(dataset))
+        assert len(self.long_prompt)>self.block_size
+        assert prompt==self.long_prompt[-self.block_size:]
 
 
 
