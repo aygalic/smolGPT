@@ -49,6 +49,7 @@ class InstructData(L.LightningDataModule):
         self.train_val_split = train_val_split
         self.dataset_name = dataset_name
 
+        self.full_dataset = None
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
@@ -65,12 +66,12 @@ class InstructData(L.LightningDataModule):
         """Download dataset
         FIXME The tokenization should take place here
         """
-        load_dataset(self.dataset_name)
+        self.full_dataset = load_dataset(self.dataset_name)
 
     def setup(self, stage: str = None):
         """Set up the datasets for each stage"""
         # Load the dataset
-        dataset = load_dataset(self.dataset_name) # FIXME : duplicate load_dataset
+        dataset = self.full_dataset
 
         if stage == "predict":
             # For prediction, we only need to prepare the prompt
