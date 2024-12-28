@@ -1,10 +1,14 @@
 """Test module for BPE Tokenizer"""
+
 import unittest
+
 from smolgpt.data.user_prompt_dataset import UserPromptDataset
+
 
 class TestUserPromptDataset(unittest.TestCase):
     """The goal of this test module is to assess that our tokenizer respect some basic nice
     to have properties"""
+
     def setUp(self):
         """
         Prepare text for training and inference.
@@ -22,22 +26,24 @@ class TestUserPromptDataset(unittest.TestCase):
         Use it to clean up any resources created in setUp.
         """
 
-    def testLen(self):
+    def test_len(self):
+        """Should only yield one query"""
         dataset = UserPromptDataset(self.basic_prompt, self.block_size)
-        assert len(dataset)==1
+        assert len(dataset) == 1
 
-    def testPrompt(self):
+    def test_short_prompt(self):
+        """Yielded prompt should be equal to itself if shorter than context window"""
         dataset = UserPromptDataset(self.basic_prompt, self.block_size)
         prompt = next(iter(dataset))
-        assert prompt==self.basic_prompt # only works if len(prompt)<block_size
+        assert prompt == self.basic_prompt  # only works if len(prompt)<block_size
 
-    def testLongPrompt(self):
+    def test_long_prompt(self):
+        """Yielded prompt should be truncated to block_size if longer than context window"""
         dataset = UserPromptDataset(self.long_prompt, self.block_size)
         prompt = next(iter(dataset))
-        assert len(self.long_prompt)>self.block_size
-        assert prompt==self.long_prompt[-self.block_size:]
+        assert len(self.long_prompt) > self.block_size
+        assert prompt == self.long_prompt[-self.block_size :]
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
