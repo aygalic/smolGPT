@@ -1,12 +1,24 @@
-from torch.utils.data import Dataset
+"""Module handling instruct dataset formatting to prompt."""
+
 import torch
 import torch.nn.functional as F
-
+from torch.utils.data import Dataset
 
 
 class InstructDataset(Dataset):
+    """Dataset handling proper prompt generation for instruct learning.
 
-    def __init__(self, data, tokenizer, block_size: int):
+    Parameters
+    ----------
+    data : Dataset
+        could be any of (DatasetDict | Dataset | IterableDatasetDict | IterableDataset)
+    tokenizer : Tokenizer
+        Tokenizer
+    block_size : int
+        Context length
+    """
+
+    def __init__(self, data: Dataset, tokenizer, block_size: int):
         self.data = data
         self.tokenizer = tokenizer
         self.block_size = block_size
@@ -19,19 +31,19 @@ class InstructDataset(Dataset):
         # Combine system prompt, question and response
         prompt = f"System: {item['system_prompt']}\nQuestion: {item['question']}\n"
         full_text = prompt + f"Response: {item['response']}"
-        
+
         # Tokenize both prompt and full text
         prompt_ids = torch.tensor(self.tokenizer.encode(prompt), dtype=torch.long)
         full_ids = torch.tensor(self.tokenizer.encode(full_text), dtype=torch.long)
-        
+
         # Pad or truncate to block_size
         if len(full_ids) > self.block_size:
-            full_ids = full_ids[:self.block_size]
+            full_ids = full_ids[: self.block_size]
         else:
             full_ids = F.pad(full_ids, (0, self.block_size - len(full_ids)), value=0)
-        
+
         # For targets, we want -100 for prompt tokens (they won't contribute to loss)
         targets = full_ids.clone()
-        targets[:len(prompt_ids)] = -100
-        
+        targets[: len(prompt_ids)] = -100
+
         return full_ids, targets
