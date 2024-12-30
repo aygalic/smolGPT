@@ -1,8 +1,21 @@
+"""This module s used to feed a user generated string into the model through the Dataset
+API"""
+
 from torch.utils.data import Dataset
 
 
 class UserPromptDataset(Dataset):
-    def __init__(self, prompt, block_size):
+    """Make a dataset of a single prompt
+
+    Parameters
+    ----------
+    prompt : list[int]
+        Prompt to be fed (tokenized)
+    block_size : int
+        Context window size
+    """
+
+    def __init__(self, prompt: list[int], block_size: int):
         self.prompt = prompt
         self.block_size = block_size
 
