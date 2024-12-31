@@ -1,13 +1,36 @@
+"""Data module designed for the pre-training task using mask learning modelling"""
+
 import lightning as L
 import torch
 from torch.utils.data import DataLoader, random_split
-from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
-from smolgpt.tokenizer.ascii_tokenizer import ASCIITokenizer
+
 from smolgpt.data.text_dataset import TextDataset
 from smolgpt.data.user_prompt_dataset import UserPromptDataset
+from smolgpt.tokenizer.ascii_tokenizer import ASCIITokenizer
+from smolgpt.tokenizer.bpe_tokenizer import BPETokenizer
 
 
 class TinyShakespeareData(L.LightningDataModule):
+    """Data module based on the tiny Shakespeare dataset.
+
+    Parameters
+    ----------
+    path_to_dir : str, optional
+        Path where the data is saved as a txt file, by default "./data/corpus.txt"
+    batch_size : int, optional
+        Batch size, by default 32
+    block_size : int, optional
+        Context length, by default 256
+    train_val_split : tuple, optional
+        Train set and validation set portion, must sum to 1, by default (0.9, 0.1)
+    tokenizer_type : str, optional
+        Type of tokenizer to use, between ASCII and BPE, by default None
+    tokenizer_path : str, optional
+        Path for tokenizer data (used for BPE only), by default "tokenizer/vocab/"
+    predict_prompt : str, optional
+        A prompt to use when testing the output of the model, by default "Once upon a time"
+    """
+
     def __init__(
         self,
         path_to_dir: str = "./data/corpus.txt",
