@@ -1,8 +1,20 @@
+"""Simple dataset class to stream text"""
+
 from torch.utils.data import Dataset
 
 
 class TextDataset(Dataset):
-    def __init__(self, data, block_size):
+    """Simple dataset to handle a simple stream of tokenized text.
+
+    Parameters
+    ----------
+    data : list[int]
+        Tokenized text
+    block_size : int
+        Context length
+    """
+
+    def __init__(self, data: list[int], block_size: int):
         self.data = data
         self.block_size = block_size
 
