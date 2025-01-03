@@ -12,7 +12,7 @@ class AttentionHead(nn.Module):
     Parameters
     ----------
     head_size : int
-        Size of the head #FIXME : unsure
+        Size of the head: this should be set as head_size = n_embed//num_heads.
     n_embed : int
         Model dimension (latent space size)
     block_size : int
