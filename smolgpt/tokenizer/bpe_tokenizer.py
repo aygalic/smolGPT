@@ -3,9 +3,9 @@ from collections import Counter
 from pathlib import Path
 
 from tqdm import tqdm
+from smolgpt.tokenizer.tokenizer import TokenizerABC
 
-
-class BPETokenizer:
+class BPETokenizer(TokenizerABC):
     def __init__(self, vocab_size: int):
         assert vocab_size >= 255
         self.vocab_size = vocab_size

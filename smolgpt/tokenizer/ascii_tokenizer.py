@@ -1,4 +1,6 @@
-class ASCIITokenizer:
+from smolgpt.tokenizer.tokenizer import TokenizerABC
+
+class ASCIITokenizer(TokenizerABC):
     def __init__(self):
         #FIXME : self init using tiny shakespeer, this should NOT be a thing
         path_to_dir="./data/corpus.txt"
