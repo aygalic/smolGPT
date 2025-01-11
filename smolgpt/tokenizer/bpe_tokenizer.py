@@ -1,11 +1,23 @@
+"""Module for BPE tokenizer"""
+
 import json
 from collections import Counter
 from pathlib import Path
 
 from tqdm import tqdm
+
 from smolgpt.tokenizer.tokenizer import TokenizerABC
 
+
 class BPETokenizer(TokenizerABC):
+    """Tokenizer using BPE algorithm.
+
+    Parameters
+    ----------
+    vocab_size : int
+        Vocabulary size
+    """
+
     def __init__(self, vocab_size: int):
         assert vocab_size >= 255
         self.vocab_size = vocab_size
@@ -70,10 +82,38 @@ class BPETokenizer(TokenizerABC):
 
     @staticmethod
     def _get_stats(ids: list[int]) -> dict[tuple[int, int], int]:
+        """Get frequency of pairs
+
+        Parameters
+        ----------
+        ids : list[int]
+            List of tokens
+
+        Returns
+        -------
+        dict[tuple[int, int], int]
+            Frequencies of pairs
+        """
         return Counter(zip(ids, ids[1:]))
 
     @staticmethod
     def _merge(ids: list[int], pair: tuple[int, int], idx: int) -> list[int]:
+        """Merge  pairs within token seq
+
+        Parameters
+        ----------
+        ids : list[int]
+            Token string
+        pair : tuple[int, int]
+            Pair to be merged
+        idx : int
+            Target to be merged into
+
+        Returns
+        -------
+        list[int]
+            Token string with all target pairs merged.
+        """
         new_ids = []
         i = 0
         while i < len(ids):
